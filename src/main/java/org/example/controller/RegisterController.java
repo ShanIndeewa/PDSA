@@ -50,17 +50,11 @@ public class RegisterController {
         String fullName = view.getNameField().getText().trim();
         String email = view.getEmailField().getText().trim();
         String phone = view.getPhoneField().getText().trim();
-        String selectedCourse = (String) view.getCourseComboBox().getSelectedItem();
         String totalFeesText = view.getTotalFeesField().getText().trim();
 
         // Check if student ID already exists
         if (PaymentService.containsStudent(studentId)) {
             throw new RuntimeException("Student ID already exists in the system");
-        }
-
-        // Validate course selection
-        if (selectedCourse == null || selectedCourse.equals("Select Course")) {
-            throw new RuntimeException("Please select a valid course");
         }
 
         // Parse and validate total fees
@@ -85,7 +79,7 @@ public class RegisterController {
         double paidAmount = 0.0;
 
         return new Student(studentId, firstName, lastName, email, phone,
-                          selectedCourse, totalFees, paidAmount);
+                          totalFees, paidAmount);
     }
 
     /**
@@ -93,7 +87,6 @@ public class RegisterController {
      */
     private boolean validateForm() {
         String totalFeesText = view.getTotalFeesField().getText().trim();
-        String selectedCourse = (String) view.getCourseComboBox().getSelectedItem();
 
         boolean basicValidation = !view.getIdField().getText().trim().isEmpty() &&
                 !view.getNameField().getText().trim().isEmpty() &&
@@ -101,8 +94,6 @@ public class RegisterController {
                 !view.getPhoneField().getText().trim().isEmpty() &&
                 Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$").matcher(view.getEmailField().getText()).matches() &&
                 Pattern.compile("^[0-9]{10}$").matcher(view.getPhoneField().getText()).matches();
-
-        boolean courseValid = selectedCourse != null && !selectedCourse.equals("Select Course");
 
         boolean feesValid = true;
         if (!totalFeesText.isEmpty()) {
@@ -114,7 +105,7 @@ public class RegisterController {
             }
         }
 
-        return basicValidation && courseValid && feesValid;
+        return basicValidation && feesValid;
     }
 
     /**
@@ -126,7 +117,6 @@ public class RegisterController {
         view.getEmailField().setText("");
         view.getPhoneField().setText("");
         view.getTotalFeesField().setText("");
-        view.getCourseComboBox().setSelectedIndex(0); // Reset to "Select Course"
         view.getStatusLabel().setText(" ");
         view.getIdField().requestFocus();
     }

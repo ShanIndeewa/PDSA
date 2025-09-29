@@ -19,11 +19,11 @@ public class PaymentService {
      * Initialize the static student linked list with sample data
      */
     private static void initializeStaticStudentList() {
-        staticStudentList.addLast(new Student("SL001", "Michael", "Johnson", "michael.j@email.com", "0771111111", "Computer Science", 16000.0, 9600.0));
-        staticStudentList.addLast(new Student("SL002", "Sarah", "Williams", "sarah.w@email.com", "0772222222", "Software Engineering", 15000.0, 12000.0));
-        staticStudentList.addLast(new Student("SL003", "David", "Wilson", "david.w@email.com", "0773333333", "Information Technology", 14000.0, 8400.0));
-        staticStudentList.addLast(new Student("SL004", "Emily", "Davis", "emily.d@email.com", "0774444444", "Data Science", 17000.0, 10200.0));
-        staticStudentList.addLast(new Student("SL005", "James", "Miller", "james.m@email.com", "0775555555", "Cybersecurity", 18000.0, 5400.0));
+        staticStudentList.addLast(new Student("SL001", "Michael", "Johnson", "michael.j@email.com", "0771111111", 16000.0, 9600.0));
+        staticStudentList.addLast(new Student("SL002", "Sarah", "Williams", "sarah.w@email.com", "0772222222", 15000.0, 12000.0));
+        staticStudentList.addLast(new Student("SL003", "David", "Wilson", "david.w@email.com", "0773333333", 14000.0, 8400.0));
+        staticStudentList.addLast(new Student("SL004", "Emily", "Davis", "emily.d@email.com", "0774444444", 17000.0, 10200.0));
+        staticStudentList.addLast(new Student("SL005", "James", "Miller", "james.m@email.com", "0775555555", 18000.0, 5400.0));
     }
 
     /**
@@ -228,21 +228,6 @@ public class PaymentService {
     }
 
     /**
-     * Get students by course
-     */
-    public static List<Student> getStudentsByCourse(String course) {
-        List<Student> courseStudents = new ArrayList<>();
-        Student[] allStudents = staticStudentList.toArray();
-
-        for (Student student : allStudents) {
-            if (student.getCourse().equalsIgnoreCase(course)) {
-                courseStudents.add(student);
-            }
-        }
-        return courseStudents;
-    }
-
-    /**
      * Count eligible students
      */
     public static int countEligibleStudents() {
@@ -277,7 +262,6 @@ public class PaymentService {
                 student.getLastName(),
                 student.getEmail(),
                 student.getPhone(),
-                student.getCourse(),
                 student.getTotalFees(),
                 newPaymentAmount
             );

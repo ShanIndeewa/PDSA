@@ -6,7 +6,6 @@ public class Student {
     private String lastName;
     private String email;
     private String phone;
-    private String course;
     private double totalFees;
     private double paidAmount;
     private boolean isEligible;
@@ -15,13 +14,12 @@ public class Student {
     public Student() {}
 
     public Student(String studentId, String firstName, String lastName, String email,
-                   String phone, String course, double totalFees, double paidAmount) {
+                   String phone, double totalFees, double paidAmount) {
         this.studentId = studentId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.phone = phone;
-        this.course = course;
         this.totalFees = totalFees;
         this.paidAmount = paidAmount;
         this.isEligible = paidAmount >= totalFees * 0.6; // 60% payment required for eligibility
@@ -44,9 +42,6 @@ public class Student {
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
-
-    public String getCourse() { return course; }
-    public void setCourse(String course) { this.course = course; }
 
     public double getTotalFees() { return totalFees; }
     public void setTotalFees(double totalFees) { this.totalFees = totalFees; }
@@ -74,7 +69,6 @@ public class Student {
         return "Student{" +
                 "studentId='" + studentId + '\'' +
                 ", name='" + getFullName() + '\'' +
-                ", course='" + course + '\'' +
                 ", eligible=" + isEligible +
                 '}';
     }

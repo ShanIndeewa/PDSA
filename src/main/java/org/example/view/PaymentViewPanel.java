@@ -179,10 +179,6 @@ public class PaymentViewPanel extends JPanel {
         nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         nameLabel.setForeground(new Color(30, 30, 30));
 
-        JLabel courseLabel = new JLabel("Course: " + student.getCourse());
-        courseLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        courseLabel.setForeground(new Color(80, 80, 80));
-
         JLabel totalFeesLabel = new JLabel(String.format("Total Fees: %.2f LKR", student.getTotalFees()));
         totalFeesLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         totalFeesLabel.setForeground(new Color(80, 80, 80));
@@ -195,10 +191,9 @@ public class PaymentViewPanel extends JPanel {
         statusLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         statusLabel.setForeground(isEligible ? new Color(40, 167, 69) : new Color(220, 53, 69));
 
-        JPanel infoPanel = new JPanel(new GridLayout(4, 1, 0, 2));
+        JPanel infoPanel = new JPanel(new GridLayout(3, 1, 0, 2));
         infoPanel.setOpaque(false);
         infoPanel.add(nameLabel);
-        infoPanel.add(courseLabel);
         infoPanel.add(totalFeesLabel);
         infoPanel.add(paidLabel);
 

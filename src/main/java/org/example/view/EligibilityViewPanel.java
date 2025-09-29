@@ -40,7 +40,7 @@ public class EligibilityViewPanel extends JPanel {
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         titleLabel.setBorder(new EmptyBorder(0, 0, 18, 0));
 
-        String[] columnNames = {"#", "Student ID", "Student Name", "Course", "Total Fees", "Paid Amount", "Date Eligible"};
+        String[] columnNames = {"#", "Student ID", "Student Name", "Total Fees", "Paid Amount", "Date Eligible"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             public boolean isCellEditable(int row, int column) { return false; }
         };
@@ -186,7 +186,6 @@ public class EligibilityViewPanel extends JPanel {
                 i + 1,  // Position number (1-based)
                 student.getStudentId(),
                 student.getFullName(),
-                student.getCourse(),
                 String.format("%.2f LKR", student.getTotalFees()),
                 String.format("%.2f LKR", student.getPaidAmount()),
                 currentDate
@@ -212,14 +211,16 @@ public class EligibilityViewPanel extends JPanel {
         for (int i = 0; i < students.length; i++) {
             Student student = students[i];
             tableModel.addRow(new Object[]{
-                    i + 1,  // Position number (1-based)
-                    student.getStudentId(),
-                    student.getFullName(),
-                    currentDate
+                i + 1,  // Position number (1-based)
+                student.getStudentId(),
+                student.getFullName(),
+                String.format("%.2f LKR", student.getTotalFees()),
+                String.format("%.2f LKR", student.getPaidAmount()),
+                currentDate
             });
         }
 
-        System.out.println("Loaded " + students.length + " eligible students into the eligibility table.");
+        System.out.println("Loaded " + students.length + " students into the eligibility table.");
     }
 
     /**

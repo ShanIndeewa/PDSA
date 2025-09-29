@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 public class RegisterViewPanel extends JPanel {
 
     private final JTextField idField, nameField, emailField, phoneField, totalFeesField;
-    private final JComboBox<String> courseComboBox;
     private JButton registerButton, clearButton;
     private final JLabel statusLabel;
     private RegisterController controller;
@@ -50,7 +49,7 @@ public class RegisterViewPanel extends JPanel {
         };
         mainCard.setOpaque(false);
         mainCard.setBorder(new EmptyBorder(40, 50, 40, 50));
-        mainCard.setPreferredSize(new Dimension(600, 750));
+        mainCard.setPreferredSize(new Dimension(600, 650));
 
         // Modern header section
         JPanel headerPanel = createHeaderPanel();
@@ -65,16 +64,12 @@ public class RegisterViewPanel extends JPanel {
         phoneField = createModernTextField("Enter phone number");
         totalFeesField = createModernTextField("Enter total fees (e.g., 15000.0)");
 
-        // Create course selection dropdown
-        courseComboBox = createModernComboBox();
-
         // Add form fields to the form panel
         addFormFieldToPanel(formPanel, "🆔 Student ID:", idField, 0);
         addFormFieldToPanel(formPanel, "👤 Full Name:", nameField, 1);
         addFormFieldToPanel(formPanel, "📧 Email Address:", emailField, 2);
         addFormFieldToPanel(formPanel, "📱 Phone Number:", phoneField, 3);
-        addFormComboBoxToPanel(formPanel, "📚 Course:", courseComboBox, 4);
-        addFormFieldToPanel(formPanel, "💰 Total Fees:", totalFeesField, 5);
+        addFormFieldToPanel(formPanel, "💰 Total Fees:", totalFeesField, 4);
 
         // Button panel with modern design
         JPanel buttonPanel = createButtonPanel();
@@ -198,49 +193,6 @@ public class RegisterViewPanel extends JPanel {
         return field;
     }
 
-    private JComboBox<String> createModernComboBox() {
-        String[] courses = {
-                "Select Course",
-                "Computer Science",
-                "Software Engineering",
-                "Information Technology",
-                "Data Science",
-                "Cybersecurity",
-                "Network Engineering",
-                "Artificial Intelligence"
-        };
-
-        JComboBox<String> comboBox = new JComboBox<>(courses);
-        comboBox.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        comboBox.setBackground(new Color(250, 250, 250));
-        comboBox.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(220, 220, 220), 2, true),
-                new EmptyBorder(8, 15, 8, 15)
-        ));
-        comboBox.setFocusable(true);
-
-        // Add focus effects
-        comboBox.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                comboBox.setBorder(BorderFactory.createCompoundBorder(
-                        new LineBorder(new Color(25, 118, 210), 2, true),
-                        new EmptyBorder(8, 15, 8, 15)
-                ));
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                comboBox.setBorder(BorderFactory.createCompoundBorder(
-                        new LineBorder(new Color(220, 220, 220), 2, true),
-                        new EmptyBorder(8, 15, 8, 15)
-                ));
-            }
-        });
-
-        return comboBox;
-    }
-
     private void addFormFieldToPanel(JPanel panel, String labelText, JTextField field, int row) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(15, 10, 15, 10);
@@ -260,27 +212,6 @@ public class RegisterViewPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         panel.add(field, gbc);
-    }
-
-    private void addFormComboBoxToPanel(JPanel panel, String labelText, JComboBox<String> comboBox, int row) {
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(15, 10, 15, 10);
-        gbc.anchor = GridBagConstraints.WEST;
-
-        JLabel label = new JLabel(labelText);
-        label.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        label.setForeground(new Color(70, 70, 70));
-
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.fill = GridBagConstraints.NONE;
-        panel.add(label, gbc);
-
-        gbc.gridx = 1;
-        gbc.gridy = row;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-        panel.add(comboBox, gbc);
     }
 
     private JPanel createButtonPanel() {
@@ -369,9 +300,6 @@ public class RegisterViewPanel extends JPanel {
     }
 
     // Additional getter methods for new fields
-    public JComboBox<String> getCourseComboBox() {
-        return courseComboBox;
-    }
 
     public JTextField getTotalFeesField() {
         return totalFeesField;
