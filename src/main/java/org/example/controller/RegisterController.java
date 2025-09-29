@@ -1,6 +1,8 @@
 package org.example.controller;
 
 import org.example.view.RegisterViewPanel;
+import org.example.service.PaymentService;
+import org.example.model.Student;
 import javax.swing.*;
 import java.awt.*;
 import java.util.regex.Pattern;
@@ -18,31 +20,101 @@ public class RegisterController {
      */
     public void handleRegisterStudent() {
         if (validateForm()) {
-            // TODO: Add actual registration logic here
-            showSuccessMessage();
-            clearForm();
+            try {
+                // Create Student object from form data
+                Student newStudent = createStudentFromForm();
+
+                // Add student to the static linked list
+                PaymentService.addStudentLast(newStudent);
+
+                showSuccessMessage();
+                clearForm();
+
+                // Optional: Display current list size for confirmation
+                System.out.println("Student registered successfully. Total students in list: " +
+                                 PaymentService.getStudentListSize());
+
+            } catch (Exception e) {
+                showErrorMessage("Failed to register student: " + e.getMessage());
+            }
         } else {
             showErrorMessage("Please fill in all required fields correctly.");
         }
     }
 
     /**
-     * Handle clear button click
+     * Create Student object from form data
      */
-    public void handleClearForm() {
-        clearForm();
+    private Student createStudentFromForm() {
+        String studentId = view.getIdField().getText().trim();
+        String fullName = view.getNameField().getText().trim();
+        String email = view.getEmailField().getText().trim();
+        String phone = view.getPhoneField().getText().trim();
+        String selectedCourse = (String) view.getCourseComboBox().getSelectedItem();
+        String totalFeesText = view.getTotalFeesField().getText().trim();
+
+        // Check if student ID already exists
+        if (PaymentService.containsStudent(studentId)) {
+            throw new RuntimeException("Student ID already exists in the system");
+        }
+
+        // Validate course selection
+        if (selectedCourse == null || selectedCourse.equals("Select Course")) {
+            throw new RuntimeException("Please select a valid course");
+        }
+
+        // Parse and validate total fees
+        double totalFees = 0.0;
+        if (!totalFeesText.isEmpty()) {
+            try {
+                totalFees = Double.parseDouble(totalFeesText);
+                if (totalFees < 0) {
+                    throw new RuntimeException("Total fees cannot be negative");
+                }
+            } catch (NumberFormatException e) {
+                throw new RuntimeException("Please enter a valid amount for total fees");
+            }
+        }
+
+        // Split full name into first and last name
+        String[] nameParts = fullName.split("\\s+", 2);
+        String firstName = nameParts[0];
+        String lastName = nameParts.length > 1 ? nameParts[1] : "";
+
+        // Default paid amount for new registration
+        double paidAmount = 0.0;
+
+        return new Student(studentId, firstName, lastName, email, phone,
+                          selectedCourse, totalFees, paidAmount);
     }
 
     /**
      * Validate the registration form
      */
     private boolean validateForm() {
-        return !view.getIdField().getText().trim().isEmpty() &&
+        String totalFeesText = view.getTotalFeesField().getText().trim();
+        String selectedCourse = (String) view.getCourseComboBox().getSelectedItem();
+
+        boolean basicValidation = !view.getIdField().getText().trim().isEmpty() &&
                 !view.getNameField().getText().trim().isEmpty() &&
                 !view.getEmailField().getText().trim().isEmpty() &&
                 !view.getPhoneField().getText().trim().isEmpty() &&
                 Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$").matcher(view.getEmailField().getText()).matches() &&
                 Pattern.compile("^[0-9]{10}$").matcher(view.getPhoneField().getText()).matches();
+
+        boolean courseValid = selectedCourse != null && !selectedCourse.equals("Select Course");
+
+        boolean feesValid = true;
+        if (!totalFeesText.isEmpty()) {
+            try {
+                double fees = Double.parseDouble(totalFeesText);
+                feesValid = fees >= 0;
+            } catch (NumberFormatException e) {
+                feesValid = false;
+            }
+        }
+
+        return basicValidation && courseValid && feesValid;
     }
 
     /**
@@ -53,6 +125,8 @@ public class RegisterController {
         view.getNameField().setText("");
         view.getEmailField().setText("");
         view.getPhoneField().setText("");
+        view.getTotalFeesField().setText("");
+        view.getCourseComboBox().setSelectedIndex(0); // Reset to "Select Course"
         view.getStatusLabel().setText(" ");
         view.getIdField().requestFocus();
     }
@@ -105,5 +179,12 @@ public class RegisterController {
             UIManager.put("Button.foreground", null);
             UIManager.put("Button.select", null);
         });
+    }
+
+    /**
+     * Handle clear button click
+     */
+    public void handleClearForm() {
+        clearForm();
     }
 }

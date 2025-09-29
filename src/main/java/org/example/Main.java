@@ -171,14 +171,19 @@ public class Main {
             tabbedPane.setBackgroundAt(1, new Color(255, 243, 224));
             tabbedPane.setBackgroundAt(2, new Color(237, 247, 237));
 
-            // Add tab change listener to refresh eligibility table when switching to that tab
+            // Add tab change listener to refresh views when switching tabs
             tabbedPane.addChangeListener(new ChangeListener() {
                 @Override
                 public void stateChanged(ChangeEvent e) {
                     int selectedIndex = tabbedPane.getSelectedIndex();
 
+                    // If Payment Management tab is selected (index 1), refresh the payment view
+                    if (selectedIndex == 1) {
+                        System.out.println("Switching to Payment Management tab - refreshing student list...");
+                        paymentPanel.refreshView();
+                    }
                     // If Eligibility Queue tab is selected (index 2), refresh the table
-                    if (selectedIndex == 2) {
+                    else if (selectedIndex == 2) {
                         System.out.println("Switching to Eligibility Queue tab - refreshing table...");
                         eligibilityPanel.refreshEligibilityTable();
                     }
@@ -225,4 +230,3 @@ public class Main {
         });
     }
 }
-

@@ -1,12 +1,11 @@
 package org.example.controller;
 
 import org.example.model.Student;
+import org.example.service.PaymentService;
 import org.example.service.StudentService;
 import org.example.view.PaymentViewPanel;
 import javax.swing.*;
 import java.awt.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 public class PaymentController {
 
@@ -15,27 +14,31 @@ public class PaymentController {
 
     public PaymentController(PaymentViewPanel view) {
         this.view = view;
-        studentService = new StudentService();
+        this.studentService = new StudentService();
     }
 
     /**
      * Handle search button click
      */
     public void handleSearch() {
-        String searchText = view.getSearchField().getText();
-        java.util.List<org.example.model.Student> results = studentService.searchStudents(searchText);
-        if (results.isEmpty()) {
+        String searchText = view.getSearchField().getText().trim();
+
+        if (searchText.isEmpty()) {
+            // If search is empty, show all students
+            view.refreshStudentCards();
+            return;
+        }
+
+        // Use PaymentService to search in the LinkedStudentList
+        Student[] results = PaymentService.searchStudents(searchText);
+
+        if (results.length == 0) {
             JOptionPane.showMessageDialog(view, "No students found for: " + searchText, "Search Results", JOptionPane.INFORMATION_MESSAGE);
+            // Still refresh to show current state
+            view.refreshStudentCards();
         } else {
-            StringBuilder sb = new StringBuilder();
-            for (org.example.model.Student s : results) {
-                sb.append("ID: ").append(s.getStudentId())
-                  .append(", Name: ").append(s.getFullName())
-                  .append(", Course: ").append(s.getCourse())
-                  .append(", Paid: ").append(s.getPaidAmount())
-                  .append("\n");
-            }
-            JOptionPane.showMessageDialog(view, sb.toString(), "Search Results", JOptionPane.INFORMATION_MESSAGE);
+            // Update the view to show only search results
+            view.showSearchResults(results);
         }
     }
 
@@ -53,22 +56,41 @@ public class PaymentController {
         try {
             double newPayment = Double.parseDouble(paymentText.trim());
             if (newPayment >= 0) {
-                // TODO: Add actual payment update logic here
-                view.getStudentPayments().put(studentId, newPayment);
-                dialog.dispose();
-                view.refreshStudentCards();
+                // Update payment in the LinkedStudentList
+                boolean success = PaymentService.updateStudentPayment(studentId, newPayment);
 
-                // Show success message
-                String message = "Payment updated successfully!\n\n" +
-                               "Student: " + studentName + " (" + studentId + ")\n" +
-                               "New Payment: " + String.format("%.2f LKR", newPayment);
+                if (success) {
+                    dialog.dispose();
+                    view.refreshStudentCards(); // Refresh to show updated data
 
-                if (newPayment >= 1000) {
-                    message += "\n\n🎉 Student is now eligible for exam queue!";
+                    // Check if student is now eligible (60% of total fees)
+                    Student updatedStudent = PaymentService.findStudentById(studentId);
+                    boolean isNowEligible = updatedStudent != null && updatedStudent.isEligible();
+
+                    // Show success message
+                    String message = "Payment updated successfully!\n\n" +
+                                   "Student: " + studentName + " (" + studentId + ")\n" +
+                                   "New Payment: " + String.format("%.2f LKR", newPayment);
+
+                    if (isNowEligible) {
+                        message += "\n\n🎉 Student is now eligible for exam queue!";
+                        message += "\nThe eligibility queue will be updated automatically.";
+                    }
+
+                    JOptionPane.showMessageDialog(view, message, "Payment Updated", JOptionPane.INFORMATION_MESSAGE);
+
+                    // Auto-refresh eligibility table if student became eligible
+                    if (isNowEligible) {
+                        System.out.println("Student " + studentId + " became eligible - triggering eligibility table refresh");
+                        // Note: In a real application, you might use an observer pattern or event system
+                        // For now, we rely on the tab change listener in Main.java to refresh when user switches tabs
+                    }
+
+                    return true;
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Failed to update payment. Student not found.", "Update Failed", JOptionPane.ERROR_MESSAGE);
+                    return false;
                 }
-
-                JOptionPane.showMessageDialog(view, message, "Payment Updated", JOptionPane.INFORMATION_MESSAGE);
-                return true;
             } else {
                 JOptionPane.showMessageDialog(dialog, "Please enter a valid positive amount.", "Invalid Amount", JOptionPane.ERROR_MESSAGE);
                 return false;
@@ -98,23 +120,35 @@ public class PaymentController {
         );
 
         if (option == JOptionPane.YES_OPTION) {
-            Student student = new Student();
-            student.setStudentId(studentId);
-            student.setFirstName(studentName);
-            student.setPaymentDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            // Get the student from PaymentService
+            Student student = PaymentService.findStudentById(studentId);
 
-            studentService.addStudent(student);
+            if (student != null && student.isEligible()) {
+                // Add student to the LinkedQueue in StudentService
+                studentService.addStudent(student);
 
-            JOptionPane.showMessageDialog(
-                view,
-                "✅ " + studentName + " (" + studentId + ") has been added to the eligibility queue!\n\n" +
-                "Date Added: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                "Added to Queue",
-                JOptionPane.INFORMATION_MESSAGE
-            );
+                JOptionPane.showMessageDialog(
+                    view,
+                    studentName + " has been added to the eligibility queue!\n" +
+                    "Queue size: " + studentService.getQueueSize() + " students",
+                    "Added to Queue",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+
+                System.out.println("Student " + studentId + " (" + studentName + ") added to LinkedQueue");
+                System.out.println("Current queue size: " + studentService.getQueueSize());
+
+            } else {
+                JOptionPane.showMessageDialog(
+                    view,
+                    "Student is not eligible or not found.",
+                    "Cannot Add to Queue",
+                    JOptionPane.WARNING_MESSAGE
+                );
+            }
         }
 
-        // Reset UIManager properties after dialogs
+        // Reset UIManager properties
         SwingUtilities.invokeLater(() -> {
             UIManager.put("Button.background", null);
             UIManager.put("Button.foreground", null);

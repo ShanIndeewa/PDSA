@@ -2,6 +2,7 @@ package org.example.view;
 
 import org.example.controller.EligibilityController;
 import org.example.model.Student;
+import org.example.service.PaymentService;
 import org.example.service.StudentService;
 
 import javax.swing.*;
@@ -14,6 +15,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class EligibilityViewPanel extends JPanel {
 
@@ -38,7 +40,7 @@ public class EligibilityViewPanel extends JPanel {
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         titleLabel.setBorder(new EmptyBorder(0, 0, 18, 0));
 
-        String[] columnNames = {"#", "Student ID", "Student Name", "Date Eligible"};
+        String[] columnNames = {"#", "Student ID", "Student Name", "Course", "Total Fees", "Paid Amount", "Date Eligible"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             public boolean isCellEditable(int row, int column) { return false; }
         };
@@ -83,8 +85,9 @@ public class EligibilityViewPanel extends JPanel {
         this.add(scrollPane, BorderLayout.CENTER);
         this.add(buttonPanel, BorderLayout.SOUTH);
 
-        // Load sample students when we move to this view
-        loadSampleStudents();
+        // Load eligible students from the linked list
+//        loadEligibleStudentsFromLinkedList();
+        addStudentToTable();
     }
 
     private JPanel createButtonPanel() {
@@ -92,10 +95,13 @@ public class EligibilityViewPanel extends JPanel {
         buttonPanel.setOpaque(false);
 
         removeButton = createModernButton("🗑️ Remove Selected Student", new Color(244, 67, 54));
+        JButton refreshButton = createModernButton("🔄 Refresh Queue", new Color(76, 175, 80));
 
-        // Use controller for button click
+        // Use controller for button clicks
         removeButton.addActionListener(e -> controller.handleRemoveSelectedStudent());
+        refreshButton.addActionListener(e -> refreshEligibilityTable());
 
+        buttonPanel.add(refreshButton);
         buttonPanel.add(removeButton);
         return buttonPanel;
     }
@@ -157,34 +163,43 @@ public class EligibilityViewPanel extends JPanel {
     }
 
     /**
-     * Load sample students into the queue and display them in the table
+     * Load eligible students from the LinkedStudentList and display them in the table
      */
-    private void loadSampleStudents() {
-        // Add some sample eligible students to the service queue
+    private void loadEligibleStudentsFromLinkedList() {
+        // Clear existing table data first
+        tableModel.setRowCount(0);
 
-//        Student student2 = new Student("S002", "Jane", "Smith", "jane.smith@email.com",
-//                                     "0779876543", "Information Technology", 14000.0, 10500.0);
-//        Student student3 = new Student("S004", "Sarah", "Williams", "sarah.williams@email.com",
-//                                     "0772223333", "Data Science", 17000.0, 15300.0);
-//        Student student4 = new Student("S007", "Alex", "Wilson", "alex.wilson@email.com",
-//                                     "0776667777", "Information Technology", 14000.0, 11200.0);
-//        Student student5 = new Student("S008", "Lisa", "Taylor", "lisa.taylor@email.com",
-//                                     "0773334444", "Software Engineering", 16000.0, 12800.0);
+        // Get eligible students from PaymentService
+        List<Student> eligibleStudents = PaymentService.getEligibleStudents();
+        String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
 
-        // Add eligible students to the service queue
+        if (eligibleStudents.isEmpty()) {
+            // Show message when no eligible students
+            System.out.println("No eligible students found in the linked list.");
+            return;
+        }
 
-//        if (student2.isEligible()) studentService.addStudent(student2);
-//        if (student3.isEligible()) studentService.addStudent(student3);
-//        if (student4.isEligible()) studentService.addStudent(student4);
-//        if (student5.isEligible()) studentService.addStudent(student5);
+        // Add each eligible student to the table
+        for (int i = 0; i < eligibleStudents.size(); i++) {
+            Student student = eligibleStudents.get(i);
+            tableModel.addRow(new Object[]{
+                i + 1,  // Position number (1-based)
+                student.getStudentId(),
+                student.getFullName(),
+                student.getCourse(),
+                String.format("%.2f LKR", student.getTotalFees()),
+                String.format("%.2f LKR", student.getPaidAmount()),
+                currentDate
+            });
+        }
 
-        // Now populate the table by calling addStudentToTable
-        addStudentToTable();
+        System.out.println("Loaded " + eligibleStudents.size() + " eligible students into the eligibility table.");
     }
 
     /**
      * Add students from the service queue to the table
      */
+
     public void addStudentToTable() {
         // Clear existing table data first
         tableModel.setRowCount(0);
@@ -197,10 +212,10 @@ public class EligibilityViewPanel extends JPanel {
         for (int i = 0; i < students.length; i++) {
             Student student = students[i];
             tableModel.addRow(new Object[]{
-                i + 1,  // Position number (1-based)
-                student.getStudentId(),
-                student.getFullName(),
-                currentDate
+                    i + 1,  // Position number (1-based)
+                    student.getStudentId(),
+                    student.getFullName(),
+                    currentDate
             });
         }
 
@@ -208,18 +223,32 @@ public class EligibilityViewPanel extends JPanel {
     }
 
     /**
-     * Refresh the eligibility table - called when switching to this tab
+     * Refresh the eligibility table - called when switching to this tab or when payments are updated
      */
     public void refreshEligibilityTable() {
-        System.out.println("Refreshing eligibility table with fresh data...");
+        System.out.println("Refreshing eligibility table with fresh data from LinkedStudentList...");
 
-        // Clear the current queue and reload fresh sample data
-        loadSampleStudents();
+        // Load eligible students from the linked list
+//        loadEligibleStudentsFromLinkedList();
+        addStudentToTable();
+
+        // Update the title to show current count
+        Component[] components = getComponents();
+        for (Component comp : components) {
+            if (comp instanceof JLabel) {
+                JLabel titleLabel = (JLabel) comp;
+                if (titleLabel.getText().contains("Eligibility Queue")) {
+                    int eligibleCount = PaymentService.countEligibleStudents();
+                    titleLabel.setText("Exam Eligibility Queue (" + eligibleCount + " eligible students)");
+                    break;
+                }
+            }
+        }
 
         System.out.println("Eligibility table refreshed successfully!");
     }
 
     public void refreshTable() {
-        addStudentToTable();
+        refreshEligibilityTable();
     }
 }

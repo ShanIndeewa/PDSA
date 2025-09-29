@@ -1,7 +1,9 @@
 package org.example.view;
 
 import org.example.model.Payment;
+import org.example.model.Student;
 import org.example.controller.PaymentController;
+import org.example.service.PaymentService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -81,9 +83,8 @@ public class PaymentViewPanel extends JPanel {
         studentListPanel.setBorder(new EmptyBorder(18, 18, 18, 18));
         studentListPanel.setOpaque(false);
 
-        addStudentCard("S001", "John Doe", studentPayments.get("S001"), studentPayments.get("S001") >= 1000);
-        addStudentCard("S002", "Jane Smith", studentPayments.get("S002"), studentPayments.get("S002") >= 1000);
-        addStudentCard("S003", "Peter Jones", studentPayments.get("S003"), studentPayments.get("S003") >= 1000);
+        // Fill the cards using linked list
+        loadStudentsFromLinkedList();
 
         JScrollPane scrollPane = new JScrollPane(studentListPanel);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -96,7 +97,41 @@ public class PaymentViewPanel extends JPanel {
         searchButton.addActionListener(e -> controller.handleSearch());
     }
 
-    private void addStudentCard(String id, String name, double totalPaid, boolean isEligible) {
+    /**
+     * Load students from the LinkedStudentList and display them as cards
+     */
+    private void loadStudentsFromLinkedList() {
+        studentListPanel.removeAll();
+
+        if (PaymentService.isStudentListEmpty()) {
+            // Show empty state
+            JLabel emptyLabel = new JLabel("No students found. Register students to see them here.");
+            emptyLabel.setFont(new Font("Segoe UI", Font.ITALIC, 16));
+            emptyLabel.setForeground(new Color(120, 120, 120));
+            emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            studentListPanel.add(Box.createVerticalGlue());
+            studentListPanel.add(emptyLabel);
+            studentListPanel.add(Box.createVerticalGlue());
+        } else {
+            // Get all students from the linked list
+            Student[] allStudents = PaymentService.getStudentsAsArray();
+
+            // Add each student as a card
+            for (Student student : allStudents) {
+                addStudentCardFromLinkedList(student);
+            }
+        }
+
+        studentListPanel.revalidate();
+        studentListPanel.repaint();
+    }
+
+    /**
+     * Add a student card using Student object from LinkedStudentList
+     */
+    private void addStudentCardFromLinkedList(Student student) {
+        boolean isEligible = student.isEligible();
+
         JPanel card = new JPanel(new BorderLayout(10, 10)) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -114,13 +149,15 @@ public class PaymentViewPanel extends JPanel {
                 new LineBorder(isEligible ? new Color(40, 167, 69, 120) : new Color(220, 53, 69, 120), 2, true),
                 new EmptyBorder(15, 20, 15, 20)
         ));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
         // Drop shadow effect
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 8, 0, new Color(0,0,0,18)),
                 card.getBorder()
         ));
+
         // Hover effect
         card.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
@@ -137,19 +174,32 @@ public class PaymentViewPanel extends JPanel {
             }
         });
 
-        JLabel nameLabel = new JLabel(String.format("%s (%s)", name, id));
+        // Student information from linked list
+        JLabel nameLabel = new JLabel(String.format("%s (%s)", student.getFullName(), student.getStudentId()));
         nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         nameLabel.setForeground(new Color(30, 30, 30));
-        JLabel paidLabel = new JLabel(String.format("Total Paid: %.2f LKR", totalPaid));
-        paidLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        paidLabel.setForeground(new Color(80, 80, 80));
-        JLabel statusLabel = new JLabel(isEligible ? "ELIGIBLE" : "NOT ELIGIBLE");
+
+        JLabel courseLabel = new JLabel("Course: " + student.getCourse());
+        courseLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        courseLabel.setForeground(new Color(80, 80, 80));
+
+        JLabel totalFeesLabel = new JLabel(String.format("Total Fees: %.2f LKR", student.getTotalFees()));
+        totalFeesLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        totalFeesLabel.setForeground(new Color(80, 80, 80));
+
+        JLabel paidLabel = new JLabel(String.format("Paid: %.2f LKR", student.getPaidAmount()));
+        paidLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        paidLabel.setForeground(new Color(0, 102, 204));
+
+        JLabel statusLabel = new JLabel(isEligible ? "✅ ELIGIBLE" : "❌ NOT ELIGIBLE");
         statusLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         statusLabel.setForeground(isEligible ? new Color(40, 167, 69) : new Color(220, 53, 69));
 
-        JPanel infoPanel = new JPanel(new GridLayout(2, 1));
+        JPanel infoPanel = new JPanel(new GridLayout(4, 1, 0, 2));
         infoPanel.setOpaque(false);
         infoPanel.add(nameLabel);
+        infoPanel.add(courseLabel);
+        infoPanel.add(totalFeesLabel);
         infoPanel.add(paidLabel);
 
         // Button panel for payment actions
@@ -158,14 +208,14 @@ public class PaymentViewPanel extends JPanel {
 
         // Set Payment button
         JButton setPaymentBtn = createModernButton("💰 Set Payment", new Color(255, 152, 0));
-        setPaymentBtn.addActionListener(e -> controller.handleSetPayment(id, name));
+        setPaymentBtn.addActionListener(e -> controller.handleSetPayment(student.getStudentId(), student.getFullName()));
 
         buttonPanel.add(setPaymentBtn);
 
-        // Add to Queue button (only show if payment >= 1000)
-        if (totalPaid >= 1000) {
+        // Add to Queue button (only show if eligible)
+        if (isEligible) {
             JButton addToQueueBtn = createModernButton("✅ Add to Queue", new Color(76, 175, 80));
-            addToQueueBtn.addActionListener(e -> controller.handleAddToQueue(id, name));
+            addToQueueBtn.addActionListener(e -> controller.handleAddToQueue(student.getStudentId(), student.getFullName()));
             buttonPanel.add(addToQueueBtn);
         }
 
@@ -175,6 +225,50 @@ public class PaymentViewPanel extends JPanel {
 
         studentListPanel.add(card);
         studentListPanel.add(Box.createVerticalStrut(16));
+    }
+
+    /**
+     * Show search results in the student list panel
+     */
+    public void showSearchResults(Student[] searchResults) {
+        studentListPanel.removeAll();
+
+        if (searchResults.length == 0) {
+            JLabel noResultsLabel = new JLabel("No students found matching your search.");
+            noResultsLabel.setFont(new Font("Segoe UI", Font.ITALIC, 16));
+            noResultsLabel.setForeground(new Color(120, 120, 120));
+            noResultsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            studentListPanel.add(Box.createVerticalGlue());
+            studentListPanel.add(noResultsLabel);
+            studentListPanel.add(Box.createVerticalGlue());
+        } else {
+            for (Student student : searchResults) {
+                addStudentCardFromLinkedList(student);
+            }
+        }
+
+        studentListPanel.revalidate();
+        studentListPanel.repaint();
+    }
+
+    /**
+     * Refresh the student list and update header count
+     */
+    public void refreshStudentCards() {
+        // Update to use linked list instead of hardcoded data
+        loadStudentsFromLinkedList();
+
+        // Clear search field to show we're showing all students again
+        searchField.setText("");
+    }
+
+    /**
+     * Public method to refresh the view (can be called from outside)
+     */
+    public void refreshView() {
+        SwingUtilities.invokeLater(() -> {
+            refreshStudentCards();
+        });
     }
 
     // Getter methods for controller access
@@ -223,7 +317,7 @@ public class PaymentViewPanel extends JPanel {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
 
-        JLabel currentLabel = new JLabel("Current Payment: " + String.format("%.2f LKR", studentPayments.get(studentId)));
+        JLabel currentLabel = new JLabel("Current Payment: " + String.format("%.2f LKR", PaymentService.getPaymentAmount(studentId)));
         currentLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         contentPanel.add(currentLabel, gbc);
@@ -272,14 +366,6 @@ public class PaymentViewPanel extends JPanel {
         });
     }
 
-    public void refreshStudentCards() {
-        studentListPanel.removeAll();
-        addStudentCard("S001", "John Doe", studentPayments.get("S001"), studentPayments.get("S001") >= 1000);
-        addStudentCard("S002", "Jane Smith", studentPayments.get("S002"), studentPayments.get("S002") >= 1000);
-        addStudentCard("S003", "Peter Jones", studentPayments.get("S003"), studentPayments.get("S003") >= 1000);
-        studentListPanel.revalidate();
-        studentListPanel.repaint();
-    }
 
     private JButton createModernButton(String text, Color baseColor) {
         JButton button = new JButton(text) {
