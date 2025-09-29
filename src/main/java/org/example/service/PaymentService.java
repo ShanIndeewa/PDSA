@@ -144,11 +144,11 @@ public class PaymentService {
     }
 
     /**
-     * Search students in linked list using binary search
+     * Search students in linked list using customized binary search for LinkedStudentList
      */
     public static Student[] searchStudents(String query) {
-        List<Student> studentList = getAllStudents();
-        return PaymentSearch.search(studentList, query);
+        // Use the customized binary search that works directly with LinkedStudentList
+        return PaymentSearch.searchInLinkedList(staticStudentList, query);
     }
 
     /**
