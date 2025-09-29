@@ -13,6 +13,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 public class PaymentViewPanel extends JPanel {
 
@@ -20,6 +22,8 @@ public class PaymentViewPanel extends JPanel {
     private JPanel studentListPanel;
     // Track student payments
     private Map<String, Double> studentPayments = new HashMap<>();
+    // Track students added to queue
+    private static Set<String> studentsInQueue = new HashSet<>();
     private PaymentController controller;
 
     public PaymentViewPanel() {
@@ -131,6 +135,7 @@ public class PaymentViewPanel extends JPanel {
      */
     private void addStudentCardFromLinkedList(Student student) {
         boolean isEligible = student.isEligible();
+        boolean isInQueue = studentsInQueue.contains(student.getStudentId());
 
         JPanel card = new JPanel(new BorderLayout(10, 10)) {
             @Override
@@ -207,11 +212,24 @@ public class PaymentViewPanel extends JPanel {
 
         buttonPanel.add(setPaymentBtn);
 
-        // Add to Queue button (only show if eligible)
-        if (isEligible) {
+        // Add to Queue button (only show if eligible and not already in queue)
+        if (isEligible && !isInQueue) {
             JButton addToQueueBtn = createModernButton("✅ Add to Queue", new Color(76, 175, 80));
-            addToQueueBtn.addActionListener(e -> controller.handleAddToQueue(student.getStudentId(), student.getFullName()));
+            addToQueueBtn.addActionListener(e -> {
+                controller.handleAddToQueue(student.getStudentId(), student.getFullName());
+                // Add student to queue tracking set
+                studentsInQueue.add(student.getStudentId());
+                // Refresh the view to hide the button
+                refreshStudentCards();
+            });
             buttonPanel.add(addToQueueBtn);
+        } else if (isEligible && isInQueue) {
+            // Show "In Queue" status instead of button
+            JLabel inQueueLabel = new JLabel("🎯 In Queue");
+            inQueueLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            inQueueLabel.setForeground(new Color(76, 175, 80));
+            inQueueLabel.setBorder(new EmptyBorder(5, 10, 5, 10));
+            buttonPanel.add(inQueueLabel);
         }
 
         card.add(infoPanel, BorderLayout.CENTER);
@@ -220,6 +238,27 @@ public class PaymentViewPanel extends JPanel {
 
         studentListPanel.add(card);
         studentListPanel.add(Box.createVerticalStrut(16));
+    }
+
+    /**
+     * Public method to mark a student as added to queue (called from controller)
+     */
+    public static void markStudentInQueue(String studentId) {
+        studentsInQueue.add(studentId);
+    }
+
+    /**
+     * Public method to remove a student from queue tracking (if needed)
+     */
+    public static void removeStudentFromQueue(String studentId) {
+        studentsInQueue.remove(studentId);
+    }
+
+    /**
+     * Check if a student is already in queue
+     */
+    public static boolean isStudentInQueue(String studentId) {
+        return studentsInQueue.contains(studentId);
     }
 
     /**
@@ -322,13 +361,38 @@ public class PaymentViewPanel extends JPanel {
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 1;
         contentPanel.add(newLabel, gbc);
 
-        JTextField paymentField = new JTextField(10);
-        paymentField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        JTextField paymentField = new JTextField(15);
+        paymentField.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         paymentField.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(220, 220, 220), 2, true),
-                new EmptyBorder(8, 12, 8, 12)
+                new EmptyBorder(12, 15, 12, 15)
         ));
+        paymentField.setPreferredSize(new Dimension(200, 40));
+        paymentField.setMinimumSize(new Dimension(180, 40));
+
+        // Add focus effects to make it more visible
+        paymentField.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                paymentField.setBorder(BorderFactory.createCompoundBorder(
+                        new LineBorder(new Color(25, 118, 210), 2, true),
+                        new EmptyBorder(12, 15, 12, 15)
+                ));
+                paymentField.setBackground(Color.WHITE);
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                paymentField.setBorder(BorderFactory.createCompoundBorder(
+                        new LineBorder(new Color(220, 220, 220), 2, true),
+                        new EmptyBorder(12, 15, 12, 15)
+                ));
+                paymentField.setBackground(new Color(250, 250, 250));
+            }
+        });
+
         gbc.gridx = 1; gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         contentPanel.add(paymentField, gbc);
 
         // Button panel

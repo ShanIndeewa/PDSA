@@ -95,13 +95,13 @@ public class EligibilityViewPanel extends JPanel {
         buttonPanel.setOpaque(false);
 
         removeButton = createModernButton("🗑️ Remove Selected Student", new Color(244, 67, 54));
-        JButton refreshButton = createModernButton("🔄 Refresh Queue", new Color(76, 175, 80));
+//        JButton refreshButton = createModernButton("🔄 Refresh Queue", new Color(76, 175, 80));
 
         // Use controller for button clicks
         removeButton.addActionListener(e -> controller.handleRemoveSelectedStudent());
-        refreshButton.addActionListener(e -> refreshEligibilityTable());
+//        refreshButton.addActionListener(e -> refreshEligibilityTable());
 
-        buttonPanel.add(refreshButton);
+//        buttonPanel.add(refreshButton);
         buttonPanel.add(removeButton);
         return buttonPanel;
     }
